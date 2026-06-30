@@ -6,29 +6,29 @@
 
 > *Your best instructions should not have to be rewritten in every conversation.*
 
-**A shared personal sentence picker for Codex and Claude Code.**
+**A local reusable prompt/snippet system with Raycast, Codex, and Claude integrations.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab?logo=python&logoColor=white)](#requirements) [![Claude Code](https://img.shields.io/badge/Claude%20Code-supported-blue?logo=claude&logoColor=white)](https://code.claude.com/docs/en/skills) [![Codex](https://img.shields.io/badge/Codex-supported-10a37f?logo=openai&logoColor=white)](https://developers.openai.com/codex/skills) [![macOS](https://img.shields.io/badge/macOS-native%20picker-000000?logo=apple&logoColor=white)](#native-picker-and-paste)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab?logo=python&logoColor=white)](#requirements) [![Raycast](https://img.shields.io/badge/Raycast-script%20commands-ff6363?logo=raycast&logoColor=white)](#raycast-first-setup) [![Claude Code](https://img.shields.io/badge/Claude%20Code-supported-blue?logo=claude&logoColor=white)](https://code.claude.com/docs/en/skills) [![Codex](https://img.shields.io/badge/Codex-supported-10a37f?logo=openai&logoColor=white)](https://developers.openai.com/codex/skills) [![macOS](https://img.shields.io/badge/macOS-native%20picker-000000?logo=apple&logoColor=white)](#native-picker-and-paste)
 
-**One `~/.always/sentences.json` file gives both agents the same reusable prompts, writing preferences, review instructions, and parameterized templates.**
+**One `~/.always/sentences.json` file powers your Raycast hotkey, Codex skill, Claude Code skill, and CLI.**
 
-[Quick start](#30-second-quick-start) · [Daily usage](#daily-usage) · [Manage sentences](#manage-your-library) · [CLI reference](#cli-reference) · [Design details](PROJECT_DETAILS.md) · [Safety](#privacy--safety)
+[Quick start](#30-second-quick-start) · [Raycast setup](#raycast-first-setup) · [Daily usage](#daily-usage) · [Manage sentences](#manage-your-library) · [CLI reference](#cli-reference) · [Design details](PROJECT_DETAILS.md) · [Safety](#privacy--safety)
 
 </div>
 
 ---
 
-Good instructions are often repeated: plan before coding, review a particular file, answer in a specific tone, verify before finishing. Always stores those instructions once and makes them available to both Codex and Claude Code. Pick a sentence, fill any variables, edit it if needed, and send it yourself.
+Good instructions are often repeated: plan before coding, review a particular file, answer in a specific tone, verify before finishing. Always stores those instructions once and makes them available from a Raycast hotkey, Codex, Claude Code, and the CLI. Pick a sentence, fill any variables, edit it if needed, and send it yourself.
 
 ## How It Works
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/architecture-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/architecture-light.svg">
-  <img alt="Always architecture: Codex and Claude Code share one personal sentence database and use the same picker script." src="assets/architecture-light.svg">
+  <img alt="Always architecture: Raycast, Codex, and Claude Code share one local Always core and one personal sentence database." src="assets/architecture-light.svg">
 </picture>
 
-The repository contains the skill and its CLI. The installer exposes that same skill directory to both agents with symlinks. Your live content stays outside the repository in `~/.always/sentences.json`, so updating the code does not overwrite your personal library.
+The repository contains the Always core CLI, agent skill, and Raycast Script Commands. Raycast is the fastest daily entry point; Codex and Claude Code use the same core when you invoke `$always` or `/always`. Your live content stays outside the repository in `~/.always/sentences.json`, so updating the code does not overwrite your personal library.
 
 ## 30-Second Quick Start
 
@@ -38,7 +38,9 @@ cd Always
 scripts/install.sh
 ```
 
-Then open Codex and type:
+Recommended macOS path: add `scripts/raycast` as a Raycast Script Directory and assign `Always` to double Option (`⌥⌥`). Then press `⌥⌥` in any app to open the picker.
+
+Agent paths still work. In Codex, type:
 
 ```text
 $always
@@ -50,14 +52,15 @@ In Claude Code, use:
 /always
 ```
 
-On macOS, a native picker opens. Choose a sentence and Always pastes it into the frontmost input without pressing Enter. You remain in control: edit the result, then send it yourself.
+On macOS, each entry point opens the same native picker. Choose a sentence and Always pastes it into the frontmost input without pressing Enter. You remain in control: edit the result, then send it yourself.
 
 > [!NOTE]
 > The native picker and automatic paste require macOS. Listing, searching, printing, and managing sentences use the Python CLI and do not require GUI automation.
 
 ## What You Get
 
-- One personal sentence library shared by Codex and Claude Code.
+- One personal sentence library shared by Raycast, Codex, Claude Code, and the CLI.
+- Raycast Script Commands for a global hotkey and direct JSON access.
 - A native macOS picker with optional pre-filtering.
 - Categories, tags, multilingual text, and `{variable}` placeholders.
 - CLI commands for listing, searching, selecting, adding, editing, and deleting.
@@ -87,6 +90,38 @@ It also creates the live database from the bundled sample only when the database
 
 Existing non-symlink skill directories are never replaced automatically. Move or remove the conflicting directory yourself, then rerun the installer.
 
+The installer does not modify Raycast settings automatically. It prints the Script Directory you can add manually:
+
+```text
+<repo>/scripts/raycast
+```
+
+### Raycast-first setup
+
+Raycast is the recommended fast path on macOS because it bypasses an agent conversation round trip.
+
+1. Run `scripts/install.sh`.
+2. Open Raycast Settings.
+3. Go to **Extensions → Scripts**.
+4. Add this repository directory as a Script Directory:
+
+   ```text
+   <repo>/scripts/raycast
+   ```
+
+5. Assign a global hotkey to `Always`. Recommended: double Option (`⌥⌥`).
+
+The Raycast directory provides two commands:
+
+| Raycast command | Purpose |
+|---|---|
+| `Always` | Open the native picker and paste the selected sentence. |
+| `Always: Open JSON` | Open `~/.always/sentences.json` in your default editor. |
+
+Raycast is only the launcher. The database, search, variable rendering, backup, and paste behavior still live in `skills/always/scripts/always.py`.
+
+Direct JSON edits are useful for quick inspection or bulk cleanup, but they bypass the CLI's rolling backup and validation. For routine changes, prefer `always.py add`, `always.py edit`, `always.py delete`, or an agent invoking those commands.
+
 ### Updating Always
 
 Because both agent paths point to the source checkout, update that checkout:
@@ -110,14 +145,15 @@ Your personal library remains at `~/.always/`. Delete it separately only if you 
 
 ## Daily Usage
 
-| Action | Codex / Claude instruction | Result |
-|---|---|---|
-| Open all sentences | `$always` / `/always` | Opens the native picker and pastes the selection. |
-| Filter first | `$always review` | Opens the picker with matching entries only. |
-| List without pasting | `$always list my saved sentences` | Prints a readable list. |
-| Add an entry | `$always add a reusable instruction …` | Writes a new database entry. |
-| Edit an entry | `$always edit chinese-human-tone …` | Updates the entry by ID. |
-| Delete an entry | `$always delete explain-simply` | Requests confirmation, then deletes it. |
+| Action | Fast entry | Codex / Claude instruction | Result |
+|---|---|---|---|
+| Open all sentences | Raycast `Always` / `⌥⌥` | `$always` / `/always` | Opens the native picker and pastes the selection. |
+| Open the JSON database | Raycast `Always: Open JSON` | Ask the agent to edit `~/.always/sentences.json` | Opens the live sentence file. |
+| Filter first | CLI: `always.py menu review` | `$always review` | Opens the picker with matching entries only. |
+| List without pasting | CLI: `always.py list` | `$always list my saved sentences` | Prints a readable list. |
+| Add an entry | CLI: `always.py add` | `$always add a reusable instruction …` | Writes a new database entry. |
+| Edit an entry | CLI: `always.py edit chinese-human-tone` | `$always edit chinese-human-tone …` | Updates the entry by ID. |
+| Delete an entry | CLI: `always.py delete explain-simply` | `$always delete explain-simply` | Requests confirmation, then deletes it. |
 
 The exact invocation UI can vary by client. The skill ID is always `always`.
 
@@ -137,7 +173,7 @@ The flow is deliberately non-destructive:
 4. System Events sends `Cmd+V` to the frontmost app.
 5. Enter is never pressed; the user reviews and sends the text.
 
-macOS may require Accessibility permission for Terminal, Raycast, Codex, or whichever app launches the script. If paste automation fails, the sentence remains on the clipboard and the CLI prints it.
+macOS may require Accessibility permission for Terminal, Raycast, Codex, or whichever app launches the script. For the Raycast hotkey path, grant Accessibility permission to Raycast if the picker works but paste does not. If paste automation fails, the sentence remains on the clipboard and the CLI prints it.
 
 ## Manage Your Library
 
@@ -273,7 +309,12 @@ Always/
 │   ├── architecture-light.svg
 │   └── architecture-dark.svg
 ├── scripts/
-│   └── install.sh
+│   ├── install.sh
+│   └── raycast/
+│       ├── README.md
+│       ├── _always_common.zsh
+│       ├── always.sh
+│       └── open-json.sh
 └── skills/always/
     ├── SKILL.md
     ├── agents/openai.yaml
@@ -288,6 +329,8 @@ From the repository root:
 ```bash
 python3 -m py_compile skills/always/scripts/always.py
 bash -n scripts/install.sh
+zsh -n scripts/raycast/always.sh
+zsh -n scripts/raycast/open-json.sh
 python3 skills/always/scripts/always.py --help
 ```
 
@@ -309,6 +352,7 @@ For an isolated data smoke test, set `HOME` to a temporary directory before runn
 | Python 3.10+ | All CLI operations | Standard library only. |
 | macOS | Native picker and automatic paste | Uses AppleScript, `pbcopy`, and System Events. |
 | Bash | Installer | Preinstalled on macOS and most Linux systems. |
+| Raycast | Optional global hotkey | Add `scripts/raycast` as a Script Directory. |
 | Accessibility permission | Automatic `Cmd+V` | Not needed for print-only CLI usage. |
 
 ## Design Details

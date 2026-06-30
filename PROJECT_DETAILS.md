@@ -6,7 +6,7 @@
 
 ## 1. For a First-Time Reader: What It Is & Why Use It
 
-Always is a local personal sentence library for AI-agent conversations. It stores reusable instructions once and exposes the same library to Codex and Claude Code.
+Always is a local reusable prompt/snippet system for AI-agent conversations and fast desktop entry. It stores reusable instructions once and exposes the same library through Raycast, Codex, Claude Code, and the CLI.
 
 **The problem it solves**: useful instructions are repetitive. Users repeatedly ask an agent to plan first, preserve behavior, review a file for a specific risk, answer in a preferred tone, or verify before completion. Rewriting those instructions costs time and leads to wording drift.
 
@@ -19,8 +19,8 @@ save once -> find quickly -> fill variables -> paste -> review -> send
 **Why this shape**:
 
 - Personal instructions should stay inspectable and editable.
-- Codex and Claude Code should use the same source instead of separate snippet stores.
-- Selection should be faster than searching a notes app.
+- Raycast, Codex, and Claude Code should use the same source instead of separate snippet stores.
+- Selection should be faster than searching a notes app or waiting for an agent round trip.
 - Pasting should never silently submit an instruction.
 - The tool should not require a service, API key, database server, or Python package installation.
 
@@ -34,15 +34,23 @@ save once -> find quickly -> fill variables -> paste -> review -> send
 
 ## 2. How It Actually Works
 
-The installed system has three layers:
+The installed system has four parts:
 
 ```text
 Always source checkout
   scripts/install.sh
+  scripts/raycast/
+    always.sh                 Raycast launcher for the native picker
+    open-json.sh              Raycast launcher for the live JSON file
+    _always_common.zsh        shared Raycast script helpers
   skills/always/
     SKILL.md                  agent behavior and routing
     scripts/always.py        CLI, picker, rendering, persistence
     assets/sentences.sample.json
+
+Raycast entry
+  Add <repo>/scripts/raycast as a Script Directory
+  Bind Always to a global hotkey, usually double Option (⌥⌥)
 
 Agent discovery
   ~/.agents/skills/always    -> source checkout (Codex)
@@ -55,13 +63,15 @@ Personal runtime data
 
 ### 2.1 Installation model
 
-`scripts/install.sh` creates symlinks, not copies. Both agents therefore execute the same `SKILL.md` and `always.py`. Updating the source checkout updates both integrations immediately.
+`scripts/install.sh` creates symlinks, not copies. Both agents therefore execute the same `SKILL.md` and `always.py`. Updating the source checkout updates both agent integrations immediately.
 
 The installer creates the database from the bundled sample only when `~/.always/sentences.json` is missing. Reinstalling does not reset personal content.
 
+Raycast integration is intentionally explicit rather than automatic: the user adds `<repo>/scripts/raycast` as a Raycast Script Directory and assigns a hotkey in Raycast Settings. The installer prints the directory path but does not modify Raycast preferences.
+
 ### 2.2 Selection model
 
-The skill defaults to `menu` because it removes a conversational round trip:
+The core picker is `always.py menu`. The skill defaults to it because it removes a conversational round trip, and Raycast makes it reachable without opening an agent conversation at all:
 
 1. Load the JSON database.
 2. Apply optional query terms.
@@ -73,7 +83,17 @@ The skill defaults to `menu` because it removes a conversational round trip:
 
 When GUI automation is unavailable, `list`, `search`, `get`, and `pick` provide a text-only path.
 
-### 2.3 Search model
+### 2.3 Raycast model
+
+Raycast commands are thin launchers:
+
+- `scripts/raycast/always.sh` locates Python and the repository-relative `always.py`, then runs `menu`.
+- `scripts/raycast/open-json.sh` opens `~/.always/sentences.json` in the user's default editor, seeding the database first if it does not exist.
+- `_always_common.zsh` centralizes path and Python discovery so command files do not hard-code `/opt/homebrew/bin/python3` or a specific checkout path.
+
+Raycast does not own persistence, search, rendering, backup, or paste behavior. Those stay in the core Python CLI so Codex, Claude Code, direct CLI use, and Raycast do not diverge.
+
+### 2.4 Search model
 
 Search concatenates these fields:
 
@@ -83,7 +103,7 @@ id + title + text + category + language + tags
 
 It lowercases both the query and searchable content. Every whitespace-separated query term must be a substring of the combined content. There is no tokenization, fuzzy matching, scoring, stemming, or language-specific segmentation.
 
-### 2.4 Write model
+### 2.5 Write model
 
 Add, edit, and delete load the full JSON object, modify the in-memory `sentences` list, then:
 
@@ -93,7 +113,7 @@ Add, edit, and delete load the full JSON object, modify the in-memory `sentences
 
 The temporary replace protects against partial primary-file writes. The rolling backup protects only the immediately previous state.
 
-### 2.5 Variable model
+### 2.6 Variable model
 
 Variables use `string.Formatter` syntax such as `{file}`. Values come from repeated `--var name=value` arguments or interactive prompts. Rendering occurs at selection time; the stored template is unchanged.
 
@@ -101,7 +121,9 @@ Variables use `string.Formatter` syntax such as `{file}`. Values come from repea
 
 ### What it can do reliably
 
-- Share one local personal instruction library between Codex and Claude Code.
+- Share one local personal instruction library between Raycast, Codex, Claude Code, and direct CLI use.
+- Launch the same picker from a Raycast global hotkey.
+- Open the live JSON database from Raycast for direct inspection or editing.
 - List and search multilingual content.
 - Select through a native macOS dialog.
 - Render reusable templates with named variables.
@@ -123,6 +145,7 @@ Variables use `string.Formatter` syntax such as `{file}`. Values come from repea
 - Provide a native GUI editor for the sentence library.
 - Validate every field against a strict JSON schema.
 - Offer first-class non-macOS picker and paste adapters.
+- Configure Raycast automatically; the user must add the Script Directory and hotkey manually.
 
 ## 4. Personal Snippets vs Project Memory
 
@@ -157,7 +180,8 @@ The current implementation is strongest for a curated personal library of concis
 ### Advantages
 
 - **Plain JSON**: easy to inspect, back up, diff, and migrate.
-- **One shared source**: Codex and Claude Code do not drift into separate prompt libraries.
+- **One shared source**: Raycast, Codex, and Claude Code do not drift into separate prompt libraries.
+- **Raycast-first speed**: a global hotkey opens the same picker without an agent round trip.
 - **Fast native path**: one command and one click for the common case.
 - **User-controlled send**: automatic paste never means automatic execution.
 - **No service dependency**: no account, network, API key, or hosted database.
@@ -171,7 +195,7 @@ The current implementation is strongest for a curated personal library of concis
 - **No concurrent-write protocol**: last writer wins, and the fixed temporary path can conflict.
 - **Basic search**: no fuzzy matching, ranking, aliases, or usage statistics.
 - **Loose validation**: malformed entry fields can survive if the top-level structure is valid.
-- **Symlink coupling**: moving or deleting the source checkout breaks both installations.
+- **Source checkout coupling**: moving or deleting the source checkout breaks the agent symlinks and the Raycast Script Directory until they are repointed.
 - **Plain-text privacy model**: safe only for content the user is comfortable storing locally in clear text.
 
 ## 7. Complete Risk List
@@ -204,23 +228,26 @@ The current implementation is strongest for a curated personal library of concis
 
 ### Installation and distribution
 
-18. **Moved source checkout**: absolute symlink targets become invalid after the repository moves.
+18. **Moved source checkout**: absolute symlink targets and the Raycast Script Directory become invalid after the repository moves.
 19. **Existing directory conflict**: the installer refuses to replace non-symlink paths, which is safe but requires manual resolution.
 20. **Platform asymmetry**: installation and text CLI functions can work beyond macOS, but `menu` and `--paste` are macOS-specific.
 21. **No current automated test suite**: verification depends on syntax checks and smoke tests until tests and CI are added.
 22. **Future data migrations**: the file contains `version: 1`, but no migration framework exists yet.
+23. **Raycast PATH differences**: Raycast may not inherit an interactive shell PATH, so its scripts must resolve Python defensively.
+24. **Raycast setting drift**: renamed scripts, moved directories, or changed hotkeys can leave user documentation out of sync with local Raycast preferences.
 
 ### Privacy
 
-23. **Plain-text storage**: anyone with access to the user account can read the saved prompts.
-24. **Accidental secret capture**: users may save credentials inside a convenient reusable sentence even though Always is not a vault.
-25. **Screen and history exposure**: printed sentences can appear in terminal scrollback, screenshots, shell automation logs, or agent transcripts.
+25. **Plain-text storage**: anyone with access to the user account can read the saved prompts.
+26. **Accidental secret capture**: users may save credentials inside a convenient reusable sentence even though Always is not a vault.
+27. **Screen and history exposure**: printed sentences can appear in terminal scrollback, screenshots, shell automation logs, or agent transcripts.
 
 ## 8. Who It Fits
 
 **Strong fit**:
 
-- People who use both Codex and Claude Code.
+- macOS users who want a Raycast global hotkey for reusable prompts.
+- People who use Codex and/or Claude Code and want the same library available inside agent conversations.
 - Users with a curated set of recurring prompts and operating preferences.
 - macOS users who value a one-click native picker.
 - Users who prefer transparent local files over a hosted snippet service.
@@ -240,15 +267,17 @@ Read and verify in this order:
 
 1. `git status --short` and `git diff --stat` after the repository is initialized with git.
 2. `skills/always/SKILL.md` for agent-facing behavior and workflow rules.
-3. `skills/always/scripts/always.py` for CLI, persistence, search, rendering, and paste behavior.
-4. `skills/always/assets/sentences.sample.json` for first-run defaults.
-5. `scripts/install.sh` for distribution paths and collision behavior.
-6. `README.md` and `README.zh.md` for the public contract.
-7. This bilingual details pair for design rationale and known risks.
+3. `scripts/raycast/` for Raycast launcher behavior and hotkey setup docs.
+4. `skills/always/scripts/always.py` for CLI, persistence, search, rendering, and paste behavior.
+5. `skills/always/assets/sentences.sample.json` for first-run defaults.
+6. `scripts/install.sh` for distribution paths and collision behavior.
+7. `README.md` and `README.zh.md` for the public contract.
+8. This bilingual details pair for design rationale and known risks.
 
 | Question | Source of truth |
 |---|---|
 | Agent trigger and expected behavior | `skills/always/SKILL.md` |
+| Raycast commands and setup | `scripts/raycast/README.md` + `scripts/raycast/*.sh` |
 | CLI flags and runtime behavior | `skills/always/scripts/always.py` |
 | Initial sample entries | `skills/always/assets/sentences.sample.json` |
 | Install paths and linking | `scripts/install.sh` |
@@ -261,10 +290,12 @@ Before a release candidate, run:
 ```bash
 python3 -m py_compile skills/always/scripts/always.py
 bash -n scripts/install.sh
+zsh -n scripts/raycast/always.sh
+zsh -n scripts/raycast/open-json.sh
 python3 skills/always/scripts/always.py --help
 ```
 
-Then run an isolated HOME smoke test covering `seed`, `list`, `search`, `get`, `add`, `edit`, and `delete`. Native picker verification must be done interactively on macOS because it depends on focus and Accessibility state.
+Then run an isolated HOME smoke test covering `seed`, `list`, `search`, `get`, `add`, `edit`, and `delete`. Native picker and Raycast hotkey verification must be done interactively on macOS because they depend on focus, Raycast settings, and Accessibility state.
 
 ## Appendix A: Current Design Decisions
 
@@ -276,6 +307,10 @@ Personal content belongs in `~/.always/`, not in the skill checkout. This separa
 
 The installer links both discovery paths to `skills/always/`. This prevents code drift and makes updates immediate. Copy-based installs would be more portable after moving the source folder but would require explicit synchronization.
 
+### A.2.1 Keep Raycast as a launcher, not the core
+
+Raycast is the fastest user-facing entry point, but it should not own business logic. Script Commands stay thin and call the repository-local Python CLI. This keeps Raycast, Codex, Claude Code, and direct terminal use on one implementation and avoids duplicating search, rendering, backup, and paste behavior in shell scripts.
+
 ### A.3 Paste without Enter
 
 Always treats a selected sentence as editable user input. It deliberately stops after paste so the user can review variables, context, and destination before execution.
@@ -286,7 +321,7 @@ The current persistence model aims for a minimal safety floor without a database
 
 ### A.5 Native picker as the default path
 
-The picker minimizes agent conversation and visual scanning overhead for small libraries. Text-mode commands remain available for inspection, automation, and environments where GUI control is unavailable.
+The picker minimizes agent conversation and visual scanning overhead for small libraries. Raycast makes that picker reachable globally; text-mode commands remain available for inspection, automation, and environments where GUI control is unavailable.
 
 ### A.6 Bilingual GitHub documentation baseline
 

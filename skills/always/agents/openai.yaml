@@ -1,4 +1,4 @@
 interface:
   display_name: "Always"
-  short_description: "Reusable personal phrase picker"
+  short_description: "Reusable personal prompt/snippet picker"
   default_prompt: "Use $always to search, select, and paste one of my saved common instructions."

@@ -6,29 +6,29 @@
 
 > *好用的指令，不应该在每次对话里重新写一遍。*
 
-**给 Codex 和 Claude Code 共用的个人常用句选择器。**
+**支持 Raycast、Codex、Claude 的本地可复用提示词 / 常用句系统。**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab?logo=python&logoColor=white)](#运行要求) [![Claude Code](https://img.shields.io/badge/Claude%20Code-supported-blue?logo=claude&logoColor=white)](https://code.claude.com/docs/en/skills) [![Codex](https://img.shields.io/badge/Codex-supported-10a37f?logo=openai&logoColor=white)](https://developers.openai.com/codex/skills) [![macOS](https://img.shields.io/badge/macOS-native%20picker-000000?logo=apple&logoColor=white)](#原生选择器与粘贴)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab?logo=python&logoColor=white)](#运行要求) [![Raycast](https://img.shields.io/badge/Raycast-script%20commands-ff6363?logo=raycast&logoColor=white)](#raycast-first-设置) [![Claude Code](https://img.shields.io/badge/Claude%20Code-supported-blue?logo=claude&logoColor=white)](https://code.claude.com/docs/en/skills) [![Codex](https://img.shields.io/badge/Codex-supported-10a37f?logo=openai&logoColor=white)](https://developers.openai.com/codex/skills) [![macOS](https://img.shields.io/badge/macOS-native%20picker-000000?logo=apple&logoColor=white)](#原生选择器与粘贴)
 
-**一份 `~/.always/sentences.json`，让两个 Agent 共用你的提示词、写作偏好、审查要求和带变量模板。**
+**一份 `~/.always/sentences.json`，同时驱动 Raycast 快捷键、Codex Skill、Claude Code Skill 和 CLI。**
 
-[30 秒开始](#30-秒开始) · [日常用法](#日常用法) · [管理常用句](#管理你的常用句库) · [CLI 命令](#cli-命令参考) · [项目详解](项目详解.md) · [隐私与安全](#隐私与安全)
+[30 秒开始](#30-秒开始) · [Raycast 设置](#raycast-first-设置) · [日常用法](#日常用法) · [管理常用句](#管理你的常用句库) · [CLI 命令](#cli-命令参考) · [项目详解](项目详解.md) · [隐私与安全](#隐私与安全)
 
 </div>
 
 ---
 
-很多指令会反复出现：先规划再写代码、审查某个文件、用特定口吻回答、完成前必须验证。Always 让你把这些要求保存一次，然后在 Codex 和 Claude Code 里共同使用。选一句、补变量、按需要修改，最后仍由你自己发送。
+很多指令会反复出现：先规划再写代码、审查某个文件、用特定口吻回答、完成前必须验证。Always 让你把这些要求保存一次，然后通过 Raycast 快捷键、Codex、Claude Code 和 CLI 共同使用。选一句、补变量、按需要修改，最后仍由你自己发送。
 
 ## 工作原理
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/architecture-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/architecture-light.svg">
-  <img alt="Always 架构：Codex 和 Claude Code 共用同一个个人常用句数据库与选择脚本。" src="assets/architecture-light.svg">
+  <img alt="Always 架构：Raycast、Codex 和 Claude Code 共用同一个 Always 核心与个人常用句数据库。" src="assets/architecture-light.svg">
 </picture>
 
-仓库保存 Skill 和 CLI；安装脚本用两个软链接把同一份 Skill 暴露给 Codex 与 Claude Code。你的真实内容独立保存在 `~/.always/sentences.json`，所以更新仓库代码不会覆盖个人常用句。
+仓库保存 Always 核心 CLI、Agent Skill 和 Raycast Script Commands。Raycast 是最快的日常入口；Codex 和 Claude Code 在触发 `$always` 或 `/always` 时调用同一套核心逻辑。你的真实内容独立保存在 `~/.always/sentences.json`，所以更新仓库代码不会覆盖个人常用句。
 
 ## 30 秒开始
 
@@ -38,7 +38,9 @@ cd Always
 scripts/install.sh
 ```
 
-然后在 Codex 输入：
+推荐 macOS 路径：把 `scripts/raycast` 加到 Raycast 的 Script Directory，并把 `Always` 绑定为双击 Option（`⌥⌥`）。之后在任何软件里按 `⌥⌥` 就能打开选择器。
+
+Agent 入口仍然保留。在 Codex 输入：
 
 ```text
 $always
@@ -50,14 +52,15 @@ $always
 /always
 ```
 
-macOS 会弹出原生选择窗口。选中一条后，Always 会把它粘贴到当前输入框，但不会按 Enter。你可以先修改，再自己发送。
+macOS 下，每个入口都会打开同一个原生选择窗口。选中一条后，Always 会把它粘贴到当前输入框，但不会按 Enter。你可以先修改，再自己发送。
 
 > [!NOTE]
 > 原生选择器和自动粘贴只支持 macOS。列出、搜索、打印和管理常用句走 Python CLI，不依赖 GUI 自动化。
 
 ## 你会得到什么
 
-- 一份由 Codex 与 Claude Code 共用的个人常用句库。
+- 一份由 Raycast、Codex、Claude Code 和 CLI 共用的个人常用句库。
+- 用于全局快捷键和直接访问 JSON 的 Raycast Script Commands。
 - 支持预先搜索过滤的 macOS 原生选择器。
 - 分类、标签、多语言正文和 `{变量}` 占位符。
 - 列出、搜索、选择、新增、修改、删除的完整 CLI。
@@ -87,6 +90,38 @@ scripts/install.sh
 
 安装器不会自动替换已经存在的非软链接目录。遇到冲突时，需要你先自行移动或删除旧目录，再重新运行安装脚本。
 
+安装器不会自动修改 Raycast 设置。它会打印需要手动添加的 Script Directory：
+
+```text
+<repo>/scripts/raycast
+```
+
+### Raycast-first 设置
+
+Raycast 是 macOS 上推荐的最快入口，因为它不需要经过 Agent 对话往返。
+
+1. 运行 `scripts/install.sh`。
+2. 打开 Raycast Settings。
+3. 进入 **Extensions → Scripts**。
+4. 把这个仓库目录添加为 Script Directory：
+
+   ```text
+   <repo>/scripts/raycast
+   ```
+
+5. 给 `Always` 分配全局快捷键。推荐双击 Option（`⌥⌥`）。
+
+Raycast 目录提供两个命令：
+
+| Raycast 命令 | 用途 |
+|---|---|
+| `Always` | 打开原生选择器，并把所选常用句粘贴到当前应用。 |
+| `Always: Open JSON` | 用默认编辑器打开 `~/.always/sentences.json`。 |
+
+Raycast 只是启动器。数据库、搜索、变量渲染、备份和粘贴逻辑仍然由 `skills/always/scripts/always.py` 负责。
+
+直接编辑 JSON 适合快速查看或批量整理，但会绕过 CLI 的滚动备份和校验。日常新增、修改、删除仍推荐使用 `always.py add`、`always.py edit`、`always.py delete`，或者让 Agent 调用这些命令。
+
 ### 更新 Always
 
 两个 Agent 都通过软链接使用源码仓，所以只需更新源码仓：
@@ -110,14 +145,15 @@ rm ~/.claude/skills/always
 
 ## 日常用法
 
-| 操作 | Codex / Claude 指令 | 结果 |
-|---|---|---|
-| 打开全部常用句 | `$always` / `/always` | 打开选择器并粘贴所选内容。 |
-| 先过滤 | `$always review` | 只显示匹配项。 |
-| 只列出、不粘贴 | `$always 列出我现在的常用句` | 输出可读列表。 |
-| 新增 | `$always 新增一条常用指令……` | 写入一条新记录。 |
-| 修改 | `$always 修改 chinese-human-tone……` | 按 ID 更新记录。 |
-| 删除 | `$always 删除 explain-simply` | 先确认，再删除。 |
+| 操作 | 快速入口 | Codex / Claude 指令 | 结果 |
+|---|---|---|---|
+| 打开全部常用句 | Raycast `Always` / `⌥⌥` | `$always` / `/always` | 打开选择器并粘贴所选内容。 |
+| 打开 JSON 数据库 | Raycast `Always: Open JSON` | 让 Agent 编辑 `~/.always/sentences.json` | 打开真实常用句文件。 |
+| 先过滤 | CLI：`always.py menu review` | `$always review` | 只显示匹配项。 |
+| 只列出、不粘贴 | CLI：`always.py list` | `$always 列出我现在的常用句` | 输出可读列表。 |
+| 新增 | CLI：`always.py add` | `$always 新增一条常用指令……` | 写入一条新记录。 |
+| 修改 | CLI：`always.py edit chinese-human-tone` | `$always 修改 chinese-human-tone……` | 按 ID 更新记录。 |
+| 删除 | CLI：`always.py delete explain-simply` | `$always 删除 explain-simply` | 先确认，再删除。 |
 
 不同客户端的显式入口可能略有差异，但 Skill ID 始终是 `always`。
 
@@ -137,7 +173,7 @@ python3 skills/always/scripts/always.py menu
 4. System Events 向当前最前方应用发送 `Cmd+V`。
 5. 不会自动按 Enter；内容必须由用户确认后发送。
 
-macOS 可能要求给 Terminal、Raycast、Codex 或其他启动脚本的应用开启“辅助功能”权限。如果自动粘贴失败，内容仍在剪贴板里，同时 CLI 会把文本打印出来。
+macOS 可能要求给 Terminal、Raycast、Codex 或其他启动脚本的应用开启“辅助功能”权限。走 Raycast 快捷键时，如果选择器能打开但无法粘贴，就给 Raycast 开启辅助功能权限。如果自动粘贴失败，内容仍在剪贴板里，同时 CLI 会把文本打印出来。
 
 ## 管理你的常用句库
 
@@ -273,7 +309,12 @@ Always/
 │   ├── architecture-light.svg
 │   └── architecture-dark.svg
 ├── scripts/
-│   └── install.sh
+│   ├── install.sh
+│   └── raycast/
+│       ├── README.md
+│       ├── _always_common.zsh
+│       ├── always.sh
+│       └── open-json.sh
 └── skills/always/
     ├── SKILL.md
     ├── agents/openai.yaml
@@ -288,6 +329,8 @@ Always/
 ```bash
 python3 -m py_compile skills/always/scripts/always.py
 bash -n scripts/install.sh
+zsh -n scripts/raycast/always.sh
+zsh -n scripts/raycast/open-json.sh
 python3 skills/always/scripts/always.py --help
 ```
 
@@ -309,6 +352,7 @@ python3 skills/always/scripts/always.py --help
 | Python 3.10+ | 全部 CLI 操作 | 只使用标准库。 |
 | macOS | 原生选择器与自动粘贴 | 使用 AppleScript、`pbcopy` 和 System Events。 |
 | Bash | 安装脚本 | macOS 和多数 Linux 系统自带。 |
+| Raycast | 可选全局快捷键 | 把 `scripts/raycast` 添加为 Script Directory。 |
 | 辅助功能权限 | 自动发送 `Cmd+V` | 只打印文本时不需要。 |
 
 ## 项目详解

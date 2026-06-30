@@ -412,7 +412,7 @@ def add_common_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--var", action="append", help="Variable value in name=value format. May be repeated.")
     parser.add_argument("--no-prompt-missing", dest="prompt_missing", action="store_false", help="Fail instead of prompting for missing variables.")
     parser.set_defaults(prompt_missing=True)
-    parser.add_argument("--paste", action="store_true", help="Copy to clipboard and paste into macOS Terminal without pressing Enter.")
+    parser.add_argument("--paste", action="store_true", help="Copy to clipboard and paste into the frontmost macOS app without pressing Enter.")
 
 
 def add_edit_options(parser: argparse.ArgumentParser) -> None:

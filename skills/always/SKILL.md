@@ -1,11 +1,11 @@
 ---
 name: always
-description: Select, search, paste, and manage reusable personal sentences from ~/.always/sentences.json. Use when the user invokes $always or /always, asks for common phrases, saved prompts, canned instructions, reusable sentences, prompt snippets, or wants to add/edit/delete/search frequently used AI instructions.
+description: Select, search, paste, and manage reusable personal prompts from ~/.always/sentences.json. Use when the user invokes $always or /always, asks for common phrases, saved prompts, canned instructions, reusable sentences, prompt snippets, Raycast Always entries, or wants to add/edit/delete/search frequently used AI instructions.
 ---
 
 # Always
 
-Use the bundled script to manage and select reusable personal instructions. Treat a selected sentence as the user's next instruction, not as inert reference text.
+Use the bundled script to manage and select reusable personal instructions. Treat a selected sentence as the user's next instruction, not as inert reference text. Raycast, Codex, Claude Code, and direct CLI usage all share the same database and core script.
 
 ## Data
 
@@ -37,14 +37,15 @@ python3 <skill-dir>/scripts/always.py delete plan-first
 `menu` opens a native macOS picker (`choose from list`), and on selection pastes
 the sentence into the frontmost app without pressing Enter. This is the fastest
 path: one command, the user clicks once, no numbered list to read back. Bind it
-to a hotkey, Raycast, or a shell alias (e.g. `alias aa='python3 <skill-dir>/scripts/always.py menu'`)
-to use it entirely outside Claude. Missing `{variables}` are prompted with a
-native dialog. Pass `--no-paste` to print instead of paste, and `--var name=value`
-to pre-fill variables.
+through Raycast, another hotkey launcher, or a shell alias (e.g.
+`alias aa='python3 <skill-dir>/scripts/always.py menu'`) to use it entirely
+outside an agent conversation. Missing `{variables}` are prompted with a native
+dialog. Pass `--no-paste` to print instead of paste, and `--var name=value` to
+pre-fill variables.
 
 ## Selection Workflow
 
-Default to the native picker. It is the fastest path and works the same in Claude Code and Codex.
+Default to the native picker. It is the fastest path and works the same from Raycast, Claude Code, and Codex.
 
 1. If the user invokes `$always` or `/always` with no arguments, run `menu`. This opens the native macOS picker; the user clicks one sentence and the script pastes it into the frontmost input without pressing Enter. Do not print a numbered list first.
 2. If the user includes search terms, run `menu "<terms>"` so the picker opens pre-filtered.
