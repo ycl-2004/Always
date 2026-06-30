@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "sentences": [
+    {
+      "id": "plan-first",
+      "title": "Plan first",
+      "text": "Do not start writing code yet. First restate your understanding, ask clarifying questions, and propose a concrete plan.",
+      "category": "planning",
+      "tags": ["clarify", "no-code-yet", "plan"],
+      "language": "en",
+      "created_at": "2026-06-29T00:00:00Z",
+      "updated_at": "2026-06-29T00:00:00Z"
+    },
+    {
+      "id": "fully-understand",
+      "title": "Fully understand first",
+      "text": "Make sure you fully understand the contents and constraints before acting. Ask as many clarifying questions as needed so we are on the same page.",
+      "category": "planning",
+      "tags": ["clarify", "understand", "questions"],
+      "language": "en",
+      "created_at": "2026-06-29T00:00:00Z",
+      "updated_at": "2026-06-29T00:00:00Z"
+    },
+    {
+      "id": "no-code-yet",
+      "title": "No code yet",
+      "text": "Do not write code, create files, or modify anything yet. Stay in analysis and planning mode until I explicitly say to implement.",
+      "category": "planning",
+      "tags": ["no-code-yet", "analysis", "planning"],
+      "language": "en",
+      "created_at": "2026-06-29T00:00:00Z",
+      "updated_at": "2026-06-29T00:00:00Z"
+    },
+    {
+      "id": "verify-before-final",
+      "title": "Verify before final",
+      "text": "Before saying the work is complete, run the relevant verification commands and report exactly what passed or what could not be run.",
+      "category": "verification",
+      "tags": ["tests", "verify", "final"],
+      "language": "en",
+      "created_at": "2026-06-29T00:00:00Z",
+      "updated_at": "2026-06-29T00:00:00Z"
+    },
+    {
+      "id": "review-focus",
+      "title": "Review with focus",
+      "text": "Review {file} carefully. Focus on {concern}. Lead with concrete bugs or risks and include file and line references where possible.",
+      "category": "review",
+      "tags": ["review", "file", "risk"],
+      "language": "en",
+      "created_at": "2026-06-29T00:00:00Z",
+      "updated_at": "2026-06-29T00:00:00Z"
+    },
+    {
+      "id": "explain-simply",
+      "title": "Explain simply",
+      "text": "Explain this in simple, direct language. Keep the answer practical and avoid unnecessary theory.",
+      "category": "writing",
+      "tags": ["explain", "simple", "practical"],
+      "language": "en",
+      "created_at": "2026-06-29T00:00:00Z",
+      "updated_at": "2026-06-29T00:00:00Z"
+    },
+    {
+      "id": "chinese-human-tone",
+      "title": "Chinese human tone",
+      "text": "用中文回答，口吻自然一点，不要像模板，也不要太书面。先讲结论，再讲关键原因。",
+      "category": "writing",
+      "tags": ["中文", "writing", "tone"],
+      "language": "zh",
+      "created_at": "2026-06-29T00:00:00Z",
+      "updated_at": "2026-06-29T00:00:00Z"
+    },
+    {
+      "id": "debug-systematically",
+      "title": "Debug systematically",
+      "text": "Debug this systematically. First reproduce or inspect the failure, then identify the smallest likely cause, then make a focused fix and verify it.",
+      "category": "debugging",
+      "tags": ["debug", "systematic", "verify"],
+      "language": "en",
+      "created_at": "2026-06-29T00:00:00Z",
+      "updated_at": "2026-06-29T00:00:00Z"
+    }
+  ]
+}
