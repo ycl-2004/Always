@@ -244,6 +244,14 @@ python3 skills/always/scripts/always.py get review-focus \
   --paste
 ```
 
+特殊变量 `{files}` 支持任意数量的值。在原生 `menu` 流程里，Always 会打开 macOS 多文件选择器，可以一次选多个文件。文本输入路径下，也可以一次粘贴多个路径；支持一行一个、逗号/顿号分隔，以及带反斜杠转义的路径。多个值会渲染成适合句子里的内联列表。CLI 里可以重复传入 `--var files=...`：
+
+```bash
+python3 skills/always/scripts/always.py get project-context-scan \
+  --var "files=README.md" \
+  --var "files=项目详解.md"
+```
+
 ## CLI 命令参考
 
 | 命令 | 用途 |

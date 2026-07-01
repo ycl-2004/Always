@@ -244,6 +244,18 @@ python3 skills/always/scripts/always.py get review-focus \
   --paste
 ```
 
+The special `{files}` variable accepts any number of values. In the native
+`menu` flow, Always opens a macOS multi-file picker. In text prompts, you can
+paste multiple paths at once; newline-separated, comma-separated, and
+shell-escaped paths are accepted. Multiple values are rendered as an inline
+list. In the CLI, repeat `--var files=...`:
+
+```bash
+python3 skills/always/scripts/always.py get project-context-scan \
+  --var "files=README.md" \
+  --var "files=PROJECT_DETAILS.md"
+```
+
 ## CLI Reference
 
 | Command | Purpose |

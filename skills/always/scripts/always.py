@@ -7,12 +7,14 @@ import argparse
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from string import Formatter
+from urllib.parse import unquote, urlparse
 
 
 APP_DIR = Path.home() / ".always"
@@ -20,6 +22,7 @@ DB_PATH = APP_DIR / "sentences.json"
 BACKUP_PATH = APP_DIR / "sentences.backup.json"
 SCRIPT_DIR = Path(__file__).resolve().parent
 SAMPLE_PATH = SCRIPT_DIR.parent / "assets" / "sentences.sample.json"
+LIST_VARIABLES = {"files"}
 
 
 class AlwaysError(Exception):
@@ -140,7 +143,11 @@ def extract_variables(template: str) -> list[str]:
     return variables
 
 
-def parse_var(values: list[str] | None) -> dict[str, str]:
+def is_list_variable(name: str) -> bool:
+    return name in LIST_VARIABLES
+
+
+def parse_var(values: list[str] | None) -> dict[str, str | list[str]]:
     parsed = {}
     for item in values or []:
         if "=" not in item:
@@ -149,18 +156,90 @@ def parse_var(values: list[str] | None) -> dict[str, str]:
         key = key.strip()
         if not key:
             raise AlwaysError(f"Variable name cannot be empty: {item}")
-        parsed[key] = value
+        if is_list_variable(key):
+            existing = parsed.setdefault(key, [])
+            if not isinstance(existing, list):
+                parsed[key] = [str(existing)]
+                existing = parsed[key]
+            existing.extend(parse_list_input(value))
+        else:
+            parsed[key] = value
     return parsed
 
 
-def render_text(template: str, values: dict[str, str], prompt_missing: bool, prompter=None) -> str:
+def normalize_file_value(value: str) -> str:
+    value = value.strip().strip("'\"")
+    parsed = urlparse(value)
+    if parsed.scheme == "file":
+        return unquote(parsed.path)
+    return value
+
+
+def parse_list_input(value: str) -> list[str]:
+    value = value.strip()
+    if not value:
+        return []
+
+    lines = [normalize_file_value(line) for line in value.splitlines() if line.strip()]
+    if len(lines) > 1:
+        return lines
+
+    if re.search(r"[,，、;；]", value):
+        return [
+            normalize_file_value(part)
+            for part in re.split(r"[,，、;；]", value)
+            if part.strip()
+        ]
+
+    try:
+        shell_parts = shlex.split(value)
+    except ValueError:
+        shell_parts = []
+    if len(shell_parts) > 1:
+        return [normalize_file_value(part) for part in shell_parts if part.strip()]
+
+    return [normalize_file_value(value)]
+
+
+def format_list_value(items: list[str]) -> str:
+    cleaned = [item.strip() for item in items if item.strip()]
+    if not cleaned:
+        return ""
+    return "、".join(cleaned)
+
+
+def prompt_list_variable(name: str, prompter=None) -> list[str]:
+    label = f"{name} (drop/paste paths)"
+    if prompter:
+        value = prompter(label)
+    elif sys.stdin.isatty():
+        value = input(f"{label}: ")
+    else:
+        value = sys.stdin.read()
+    return parse_list_input(value)
+
+
+def render_text(
+    template: str,
+    values: dict[str, str | list[str]],
+    prompt_missing: bool,
+    prompter=None,
+    list_prompter=None,
+) -> str:
     missing = [name for name in extract_variables(template) if name not in values]
     for name in missing:
         if not prompt_missing:
             raise AlwaysError(f"Missing variable: {name}")
-        values[name] = prompter(name) if prompter else input(f"{name}: ")
+        if is_list_variable(name):
+            values[name] = list_prompter(name) if list_prompter else prompt_list_variable(name, prompter)
+        else:
+            values[name] = prompter(name) if prompter else input(f"{name}: ")
+    rendered_values = {
+        name: format_list_value(value) if is_list_variable(name) and isinstance(value, list) else value
+        for name, value in values.items()
+    }
     try:
-        return template.format(**values)
+        return template.format(**rendered_values)
     except KeyError as exc:
         raise AlwaysError(f"Missing variable: {exc.args[0]}") from exc
 
@@ -244,6 +323,22 @@ return text returned of theResponse
     if code != 0:
         raise AlwaysError("Cancelled.")
     return out
+
+
+def native_file_prompt(name: str) -> list[str]:
+    script = f'''
+set chosenFiles to choose file with prompt {applescript_quote("Choose files for " + name + ":")} with multiple selections allowed
+set renderedPaths to {{}}
+repeat with chosenFile in chosenFiles
+  set end of renderedPaths to POSIX path of chosenFile
+end repeat
+set AppleScript's text item delimiters to linefeed
+return renderedPaths as text
+'''
+    code, out, _err = run_applescript(script)
+    if code != 0:
+        raise AlwaysError("Cancelled.")
+    return parse_list_input(out)
 
 
 def output_text(text: str, paste: bool) -> None:
@@ -358,6 +453,7 @@ def cmd_menu(args: argparse.Namespace) -> int:
         parse_var(args.var),
         prompt_missing=True,
         prompter=native_prompt,
+        list_prompter=native_file_prompt,
     )
     output_text(text, args.paste)
     return 0

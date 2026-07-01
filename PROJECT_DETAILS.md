@@ -115,7 +115,7 @@ The temporary replace protects against partial primary-file writes. The rolling 
 
 ### 2.6 Variable model
 
-Variables use `string.Formatter` syntax such as `{file}`. Values come from repeated `--var name=value` arguments or interactive prompts. Rendering occurs at selection time; the stored template is unchanged.
+Variables use `string.Formatter` syntax such as `{file}`. Values come from repeated `--var name=value` arguments or interactive prompts. Rendering occurs at selection time; the stored template is unchanged. The special `{files}` variable is list-valued: the native `menu` flow opens a macOS multi-file picker, text prompts split newline-separated, comma-separated, or shell-escaped values, and repeated `--var files=...` CLI arguments render as an inline list.
 
 ## 3. Capability Boundary
 

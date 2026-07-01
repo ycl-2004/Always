@@ -13,7 +13,7 @@ Use the bundled script to manage and select reusable personal instructions. Trea
 - Single backup: `~/.always/sentences.backup.json`
 - If the database is missing, initialize it from `assets/sentences.sample.json` by running `python3 <skill-dir>/scripts/always.py seed`.
 
-The database supports categories, tags, multilingual text, and variables written as `{name}` placeholders.
+The database supports categories, tags, multilingual text, and variables written as `{name}` placeholders. The special `{files}` variable accepts multiple values; the native `menu` flow opens a macOS multi-file picker.
 
 ## Commands
 
@@ -69,6 +69,12 @@ If a sentence contains placeholders such as `{file}` or `{concern}`:
 1. Fill values from command arguments when available.
 2. Ask the user for missing values.
 3. Substitute the variables before pasting or treating the sentence as an instruction.
+
+For `{files}`, collect any number of file values. In the native `menu` flow,
+open the macOS multi-file picker. In text prompt or CLI usage, newline-separated,
+comma-separated, and shell-escaped paths are accepted; repeated
+`--var files=...` arguments also provide multiple files. Multiple values render
+as an inline list.
 
 ## Paste Behavior
 
